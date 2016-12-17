@@ -1,21 +1,23 @@
 ---
 driver:
   name: vagrant
-
+  network:
+  - ["forwarded_port", {guest: 8080, host: 8080}]
+  customize:
+    cableconnected1: 'on'
 provisioner:
   name: chef_zero
 
+verifier:
+  name: inspec
+
 platforms:
-  - name: ubuntu-12.04
-    driver_config:
-      network:
-      - ["forwarded_port", {guest: 8080, host: 8080}]
-  - name: ubuntu-14.04
-    driver_config:
-      network:
-      - ["forwarded_port", {guest: 8080, host: 8080}]
+  - name: ubuntu-16.04
 suites:
   - name: default
     run_list:
       - recipe[gogs::default]
+    verifier:
+      inspec_tests:
+        - test/recipes
     attributes:
