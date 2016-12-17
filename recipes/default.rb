@@ -20,10 +20,6 @@ include_recipe 'apt'
 
 include_recipe 'chef-sugar'
 
-os = 'linux'
-os = 'darwin' if osx?
-os = 'windows' if windows?
-
 package 'unzip'
 package 'git'
 
@@ -51,7 +47,7 @@ end
 
 ark 'gogs' do
   path node['gogs']['install_dir']
-  url "https://github.com/gogits/gogs/releases/download/v#{node['gogs']['version']}/#{os}_amd64.zip"
+  url "https://github.com/gogits/gogs/releases/download/v#{node['gogs']['version']}/linux_amd64.zip"
   owner node['gogs']['config']['global']['RUN_USER']
   group node['gogs']['config']['global']['RUN_USER']
   action :put
@@ -70,8 +66,8 @@ systemd_service 'gogs' do
   after 'network.target'
   service do
     exec_start "#{node['gogs']['install_dir']}/gogs/gogs web"
-    user 'git'
-    group 'git'
+    user node['gogs']['config']['global']['RUN_USER']
+    group node['gogs']['config']['global']['RUN_USER']
     restart 'always'
     type 'simple'
     working_directory "#{node['gogs']['install_dir']}/gogs"
