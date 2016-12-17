@@ -20,8 +20,6 @@ include_recipe 'apt'
 
 include_recipe 'chef-sugar'
 
-include_recipe 'supervisord'
-
 os = 'linux'
 os = 'darwin' if osx?
 os = 'windows' if windows?
@@ -66,12 +64,23 @@ template "#{node['gogs']['install_dir']}/gogs/custom/conf/app.ini" do
   variables config: JSON.parse(node['gogs']['config'].to_json)
 end
 
-supervisord_program 'gogs' do
-  command "#{node['gogs']['install_dir']}/gogs/gogs web"
-  autorestart true
-  startretries 10
-  user node['gogs']['config']['global']['RUN_USER']
-  stderr_logfile "#{node['gogs']['install_dir']}/gogs/supervisord_gogs.err.log"
-  stdout_logfile "#{node['gogs']['install_dir']}/gogs/supervisord_gogs.out.log"
-  action [:supervise, :start]
+systemd_service 'gogs' do
+  description 'Go Git Service'
+  after 'syslog.target'
+  after 'network.target'
+  service do
+    exec_start "#{node['gogs']['install_dir']}/gogs/gogs web"
+    user 'git'
+    group 'git'
+    restart 'always'
+    type 'simple'
+    working_directory "#{node['gogs']['install_dir']}/gogs"
+  end
+  install do
+    wanted_by 'multi-user.target'
+  end
+end
+
+service 'gogs' do
+  action [:enable, :start]
 end
